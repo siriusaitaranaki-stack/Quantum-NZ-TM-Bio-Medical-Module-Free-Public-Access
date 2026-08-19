@@ -1,0 +1,216 @@
+{
+  "entities": {
+    "userProfile": {
+      "title": "UserProfile",
+      "description": "User persistent profile and registration in the sovereign research registry",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "Firebase Auth UID of the user",
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "email": {
+          "type": "string",
+          "description": "Email address of the researcher"
+        },
+        "displayName": {
+          "type": "string",
+          "description": "Full name or researcher moniker"
+        },
+        "photoURL": {
+          "type": "string",
+          "description": "Avatar URL from Google, Microsoft, or Gravatar"
+        },
+        "authProvider": {
+          "type": "string",
+          "description": "Authentication provider used (google, microsoft, password, anonymous)",
+          "enum": ["google.com", "microsoft.com", "password", "anonymous"]
+        },
+        "organization": {
+          "type": "string",
+          "description": "Affiliated hospital, laboratory, university, or independent"
+        },
+        "role": {
+          "type": "string",
+          "description": "User role in research ecosystem",
+          "enum": ["researcher", "clinician", "student", "public_humanitarian", "admin"]
+        },
+        "primaryResearchInterest": {
+          "type": "string",
+          "description": "Primary disease or target interest"
+        },
+        "country": {
+          "type": "string",
+          "description": "Country or jurisdiction"
+        },
+        "openAccessPledgeAccepted": {
+          "type": "boolean",
+          "description": "Affirmation of Universal Open Access Covenant"
+        },
+        "registeredAt": {
+          "type": "string",
+          "description": "ISO timestamp of registration"
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "ISO timestamp of creation"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "ISO timestamp of last update"
+        }
+      },
+      "required": ["userId", "email", "role", "createdAt"]
+    },
+    "researchDossier": {
+      "title": "ResearchDossier",
+      "description": "Saved exported research dossier and molecular docking analysis",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique dossier ID",
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "userId": {
+          "type": "string",
+          "description": "Creator user ID"
+        },
+        "cureId": {
+          "type": "string",
+          "description": "Disease or cure identifier"
+        },
+        "diseaseName": {
+          "type": "string",
+          "description": "Name of the targeted condition"
+        },
+        "dossierTitle": {
+          "type": "string",
+          "description": "Title of the research dossier"
+        },
+        "dataHash": {
+          "type": "string",
+          "description": "Cryptographic WIPO hash seal"
+        },
+        "coherenceRate": {
+          "type": "number",
+          "description": "Deterministic coherence rate percentage"
+        },
+        "notes": {
+          "type": "string",
+          "description": "Researcher notes or laboratory findings"
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "ISO timestamp of creation"
+        }
+      },
+      "required": ["id", "userId", "cureId", "diseaseName", "dossierTitle", "createdAt"]
+    },
+    "communityConsensusAudit": {
+      "title": "CommunityConsensusAudit",
+      "description": "Cryptographic consensus audit submitted by worldwide researchers",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Audit record ID",
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "userId": {
+          "type": "string",
+          "description": "Auditing researcher UID"
+        },
+        "cureId": {
+          "type": "string",
+          "description": "Target disease identifier"
+        },
+        "datasetAcronym": {
+          "type": "string",
+          "description": "Audited biomedical database acronym (e.g., RCSB PDB, UniProt)"
+        },
+        "verificationHash": {
+          "type": "string",
+          "description": "Verification hash seal"
+        },
+        "consensusAffirmed": {
+          "type": "boolean",
+          "description": "Whether 100% deterministic consensus was affirmed"
+        },
+        "latencyMs": {
+          "type": "number",
+          "description": "Observed roundtrip latency in ms"
+        },
+        "notes": {
+          "type": "string",
+          "description": "Audit notes or peer review remarks"
+        },
+        "timestamp": {
+          "type": "string",
+          "description": "ISO timestamp of the audit"
+        }
+      },
+      "required": ["id", "userId", "cureId", "datasetAcronym", "verificationHash", "consensusAffirmed", "timestamp"]
+    },
+    "voluntaryPledge": {
+      "title": "VoluntaryPledge",
+      "description": "Optional voluntary humanitarian contribution record to support Google Cloud R&D infrastructure",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Pledge ID",
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "userId": {
+          "type": "string",
+          "description": "User ID"
+        },
+        "donorName": {
+          "type": "string",
+          "description": "Display or anonymous moniker"
+        },
+        "amountUsd": {
+          "type": "number",
+          "description": "Voluntary donation amount in USD"
+        },
+        "billingAccountId": {
+          "type": "string",
+          "description": "Target GCP Billing account ID (01B1F2-C6D3EF-37C0D2)"
+        },
+        "purpose": {
+          "type": "string",
+          "description": "Google Cloud serverless compute & R&D support"
+        },
+        "isMandatory": {
+          "type": "boolean",
+          "description": "Always false (100% voluntary)"
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "ISO timestamp"
+        }
+      },
+      "required": ["id", "userId", "amountUsd", "billingAccountId", "isMandatory", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "userProfile",
+      "description": "User profile collection partitioned by UID"
+    },
+    "/dossiers/{dossierId}": {
+      "schema": "researchDossier",
+      "description": "Global research dossiers and saved simulations"
+    },
+    "/consensus_audits/{auditId}": {
+      "schema": "communityConsensusAudit",
+      "description": "Global peer-reviewed consensus audits for 16 biomedical databases"
+    },
+    "/voluntary_pledges/{pledgeId}": {
+      "schema": "voluntaryPledge",
+      "description": "Non-mandatory voluntary contributions to support Google Cloud compute infrastructure"
+    }
+  }
+}

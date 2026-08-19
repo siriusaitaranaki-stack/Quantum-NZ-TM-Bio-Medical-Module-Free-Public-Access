@@ -1,0 +1,97 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() > 0 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // User Profile Rules
+    function isValidUserProfile(data) {
+      return data.userId is string && data.userId == request.auth.uid &&
+             data.email is string && data.email.size() > 0 && data.email.size() <= 256 &&
+             data.role in ['researcher', 'clinician', 'student', 'public_humanitarian', 'admin'] &&
+             data.createdAt is string && data.createdAt.size() <= 64;
+    }
+
+    match /users/{userId} {
+      allow get: if isAuthenticated() && isValidId(userId);
+      allow list: if isAuthenticated();
+      allow create: if isOwner(userId) && isValidId(userId) && isValidUserProfile(incoming());
+      allow update: if isOwner(userId) && isValidId(userId) && isValidUserProfile(incoming()) && incoming().userId == existing().userId;
+      allow delete: if isOwner(userId) && isValidId(userId);
+    }
+
+    // Research Dossiers
+    function isValidDossier(data) {
+      return data.id is string && data.id.size() > 0 && data.id.size() <= 128 &&
+             data.userId is string && data.userId == request.auth.uid &&
+             data.cureId is string && data.cureId.size() > 0 && data.cureId.size() <= 128 &&
+             data.diseaseName is string && data.diseaseName.size() > 0 && data.diseaseName.size() <= 256 &&
+             data.dossierTitle is string && data.dossierTitle.size() > 0 && data.dossierTitle.size() <= 256 &&
+             data.createdAt is string && data.createdAt.size() <= 64;
+    }
+
+    match /dossiers/{dossierId} {
+      allow get: if isValidId(dossierId);
+      allow list: if true;
+      allow create: if isAuthenticated() && isValidId(dossierId) && isValidDossier(incoming()) && incoming().id == dossierId;
+      allow update: if isAuthenticated() && isValidId(dossierId) && resource.data.userId == request.auth.uid && isValidDossier(incoming()) && incoming().id == dossierId;
+      allow delete: if isAuthenticated() && isValidId(dossierId) && resource.data.userId == request.auth.uid;
+    }
+
+    // Community Consensus Audits
+    function isValidAudit(data) {
+      return data.id is string && data.id.size() > 0 && data.id.size() <= 128 &&
+             data.userId is string && data.userId == request.auth.uid &&
+             data.cureId is string && data.cureId.size() > 0 && data.cureId.size() <= 128 &&
+             data.datasetAcronym is string && data.datasetAcronym.size() > 0 && data.datasetAcronym.size() <= 64 &&
+             data.verificationHash is string && data.verificationHash.size() > 0 && data.verificationHash.size() <= 128 &&
+             data.consensusAffirmed is bool &&
+             data.timestamp is string && data.timestamp.size() <= 64;
+    }
+
+    match /consensus_audits/{auditId} {
+      allow get: if isValidId(auditId);
+      allow list: if true;
+      allow create: if isAuthenticated() && isValidId(auditId) && isValidAudit(incoming()) && incoming().id == auditId;
+      allow update: if isAuthenticated() && isValidId(auditId) && resource.data.userId == request.auth.uid && isValidAudit(incoming()) && incoming().id == auditId;
+      allow delete: if isAuthenticated() && isValidId(auditId) && resource.data.userId == request.auth.uid;
+    }
+
+    // Voluntary Pledges
+    function isValidPledge(data) {
+      return data.id is string && data.id.size() > 0 && data.id.size() <= 128 &&
+             data.userId is string && data.userId == request.auth.uid &&
+             data.amountUsd is number && data.amountUsd >= 0 && data.amountUsd <= 1000000 &&
+             data.billingAccountId is string && data.billingAccountId.size() <= 64 &&
+             data.isMandatory == false &&
+             data.createdAt is string && data.createdAt.size() <= 64;
+    }
+
+    match /voluntary_pledges/{pledgeId} {
+      allow get: if isAuthenticated() && isValidId(pledgeId);
+      allow list: if isAuthenticated();
+      allow create: if isAuthenticated() && isValidId(pledgeId) && isValidPledge(incoming()) && incoming().id == pledgeId;
+      allow update: if isAuthenticated() && isValidId(pledgeId) && resource.data.userId == request.auth.uid && isValidPledge(incoming());
+      allow delete: if isAuthenticated() && isValidId(pledgeId) && resource.data.userId == request.auth.uid;
+    }
+  }
+}

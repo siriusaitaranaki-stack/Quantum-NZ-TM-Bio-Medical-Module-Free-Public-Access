@@ -23,8 +23,13 @@ import {
   Shield,
   HeartPulse,
   Heart,
-  HandHeart
+  HandHeart,
+  LogIn,
+  User,
+  Users,
+  CheckCircle2
 } from 'lucide-react';
+import { useFirebase } from '../context/FirebaseContext';
 
 export type ActiveTab =
   | 'find-a-cure'
@@ -41,6 +46,8 @@ interface NavigationProps {
   onOpenExportModal: () => void;
   onOpenLegalModal: () => void;
   onOpenDonationModal: () => void;
+  onOpenAuthModal: () => void;
+  onOpenRegistryModal: () => void;
 }
 
 export const Navigation: React.FC<NavigationProps> = ({
@@ -48,8 +55,12 @@ export const Navigation: React.FC<NavigationProps> = ({
   setActiveTab,
   onOpenExportModal,
   onOpenLegalModal,
-  onOpenDonationModal
+  onOpenDonationModal,
+  onOpenAuthModal,
+  onOpenRegistryModal
 }) => {
+  const { user, userProfile } = useFirebase();
+
   const navItems = [
     {
       id: 'find-a-cure' as ActiveTab,
@@ -102,6 +113,15 @@ export const Navigation: React.FC<NavigationProps> = ({
     }
   ];
 
+  const providerLabel =
+    user?.providerData[0]?.providerId === 'google.com'
+      ? 'Google Auth'
+      : user?.providerData[0]?.providerId === 'microsoft.com'
+      ? 'Microsoft Auth'
+      : user?.isAnonymous
+      ? 'Guest'
+      : 'User';
+
   return (
     <div className="bg-slate-900/90 backdrop-blur-md border-b border-slate-800 sticky top-0 z-40 shadow-xl">
       <div className="max-w-7xl mx-auto px-4 sm:px-6">
@@ -144,15 +164,58 @@ export const Navigation: React.FC<NavigationProps> = ({
             })}
           </div>
 
-          {/* Action Tools */}
+          {/* Action Tools & Auth Registry Profile */}
           <div className="flex items-center gap-2 shrink-0 self-end md:self-center">
+            {/* Global Registry Directory Button */}
+            <button
+              onClick={onOpenRegistryModal}
+              title="Open Global Researcher Persistent Registry Directory"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-950/80 hover:bg-indigo-900 text-indigo-300 border border-indigo-500/40 text-xs font-semibold transition cursor-pointer"
+            >
+              <Users className="w-3.5 h-3.5 text-indigo-400" />
+              <span className="hidden sm:inline">Registry</span>
+            </button>
+
+            {/* Google / Microsoft Auth Button or User Profile Pill */}
+            <button
+              onClick={onOpenAuthModal}
+              title={user ? 'Manage Authentication & Account' : 'Sign in with Google or Microsoft'}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-bold transition cursor-pointer ${
+                user && !user.isAnonymous
+                  ? 'bg-slate-800 hover:bg-slate-700 text-cyan-300 border-cyan-500/50'
+                  : 'bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white border-cyan-400/40 shadow-md'
+              }`}
+            >
+              {user && user.photoURL ? (
+                <img
+                  src={user.photoURL}
+                  alt="Avatar"
+                  className="w-4 h-4 rounded-full object-cover border border-cyan-300"
+                />
+              ) : (
+                <LogIn className="w-3.5 h-3.5" />
+              )}
+
+              <span>
+                {user && !user.isAnonymous
+                  ? (userProfile?.displayName || user.displayName || user.email?.split('@')[0] || 'Researcher')
+                  : 'Sign In (Google / Microsoft)'}
+              </span>
+
+              {user && !user.isAnonymous && (
+                <span className="text-[9px] font-mono px-1 py-0.2 rounded bg-cyan-950 text-cyan-200 border border-cyan-500/30">
+                  {providerLabel}
+                </span>
+              )}
+            </button>
+
             <button
               onClick={onOpenDonationModal}
               title="Donate to Humanitarian Software & Laboratory R&D (BNZ, PayPal, GPay, Stripe)"
               className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-gradient-to-r from-rose-600 via-red-600 to-pink-600 hover:from-rose-500 hover:to-red-500 text-white border border-rose-400/40 text-xs font-bold shadow-md shadow-rose-950/50 transition hover:scale-105 cursor-pointer animate-pulse"
             >
               <Heart className="w-3.5 h-3.5 fill-white text-white" />
-              <span>Donate Here</span>
+              <span className="hidden sm:inline">Donate</span>
             </button>
 
             <button
@@ -161,7 +224,7 @@ export const Navigation: React.FC<NavigationProps> = ({
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-950/80 hover:bg-emerald-900 text-emerald-300 border border-emerald-500/40 text-xs font-medium transition cursor-pointer"
             >
               <Shield className="w-3.5 h-3.5 text-emerald-400" />
-              <span className="hidden sm:inline">Patent Grant</span>
+              <span className="hidden sm:inline">Patent</span>
             </button>
 
             <button

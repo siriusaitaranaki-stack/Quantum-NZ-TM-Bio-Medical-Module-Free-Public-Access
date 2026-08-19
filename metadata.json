@@ -1,0 +1,6 @@
+{
+  "name": "Quantum-NZ Medical Developmental Simulation Suite",
+  "description": "Free For All Humanity @ Forever — Globally legally compliant sovereign medical developmental simulation software, molecular docking engine, standing wave calculus, and bio-medical research platform.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

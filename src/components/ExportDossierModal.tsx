@@ -23,17 +23,26 @@ import {
   Check,
   Sparkles,
   Share2,
-  Layers
+  Layers,
+  Mail,
+  Send,
+  FileSpreadsheet
 } from 'lucide-react';
 
 interface ExportDossierModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onOpenGmailModal?: () => void;
+  onOpenSheetsModal?: () => void;
+  onOpenDocsModal?: () => void;
 }
 
 export const ExportDossierModal: React.FC<ExportDossierModalProps> = ({
   isOpen,
-  onClose
+  onClose,
+  onOpenGmailModal,
+  onOpenSheetsModal,
+  onOpenDocsModal
 }) => {
   const [downloadFormat, setDownloadFormat] = useState<'markdown' | 'json' | 'sop'>('markdown');
   const [isExporting, setIsExporting] = useState(false);
@@ -181,7 +190,7 @@ ${COMPREHENSIVE_DISEASE_CURES.map(
 
         <div className="p-6 space-y-4 text-xs text-slate-300">
           <p className="text-slate-400 leading-relaxed">
-            Download the complete scientific specification, chemical formulations with SMILES strings,
+            Download or dispatch the complete scientific specification, chemical formulations with SMILES strings,
             standing-wave calculus equations, and hospital administration SOPs under the Universal Humanitarian Open-Access Grant.
           </p>
 
@@ -242,10 +251,94 @@ ${COMPREHENSIVE_DISEASE_CURES.map(
             </div>
           </div>
 
+          {/* Quick Google Docs Export Option */}
+          {onOpenDocsModal && (
+            <div className="p-3.5 rounded-xl bg-gradient-to-r from-blue-950/60 via-slate-950 to-blue-950/40 border border-blue-500/40 flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 rounded-lg bg-blue-500/20 text-blue-400 border border-blue-500/30">
+                  <FileText className="w-4 h-4" />
+                </div>
+                <div>
+                  <div className="font-bold text-white text-xs">Live Google Docs Master Dossier</div>
+                  <div className="text-[11px] text-slate-400">
+                    Create a formatted Google Doc with all formulations synced directly to Google Drive
+                  </div>
+                </div>
+              </div>
+
+              <button
+                onClick={() => {
+                  onClose();
+                  onOpenDocsModal();
+                }}
+                className="px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs flex items-center gap-1.5 shadow transition cursor-pointer"
+              >
+                <FileText className="w-3 h-3" />
+                <span>Open Docs</span>
+              </button>
+            </div>
+          )}
+
+          {/* Quick Google Sheets Export Option */}
+          {onOpenSheetsModal && (
+            <div className="p-3.5 rounded-xl bg-gradient-to-r from-emerald-950/60 via-slate-950 to-emerald-950/40 border border-emerald-500/40 flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 rounded-lg bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                  <FileSpreadsheet className="w-4 h-4" />
+                </div>
+                <div>
+                  <div className="font-bold text-white text-xs">Live Google Sheets Export</div>
+                  <div className="text-[11px] text-slate-400">
+                    Create a multi-tab Google Spreadsheet synced directly to your Google Drive
+                  </div>
+                </div>
+              </div>
+
+              <button
+                onClick={() => {
+                  onClose();
+                  onOpenSheetsModal();
+                }}
+                className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center gap-1.5 shadow transition cursor-pointer"
+              >
+                <FileSpreadsheet className="w-3 h-3" />
+                <span>Open Sheets</span>
+              </button>
+            </div>
+          )}
+
+          {/* Quick Gmail Dispatch Option */}
+          {onOpenGmailModal && (
+            <div className="p-3.5 rounded-xl bg-gradient-to-r from-rose-950/60 via-slate-950 to-rose-950/40 border border-rose-500/40 flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 rounded-lg bg-rose-500/20 text-rose-400 border border-rose-500/30">
+                  <Mail className="w-4 h-4" />
+                </div>
+                <div>
+                  <div className="font-bold text-white text-xs">Direct Gmail Dispatch</div>
+                  <div className="text-[11px] text-slate-400">
+                    Send directly to collaborating oncologists or trial clinics via Gmail
+                  </div>
+                </div>
+              </div>
+
+              <button
+                onClick={() => {
+                  onClose();
+                  onOpenGmailModal();
+                }}
+                className="px-3 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs flex items-center gap-1.5 shadow transition cursor-pointer"
+              >
+                <Send className="w-3 h-3" />
+                <span>Open Gmail</span>
+              </button>
+            </div>
+          )}
+
           {/* Verification Badge */}
           <div className="bg-slate-950/80 p-3 rounded-lg border border-slate-800 flex items-center gap-2 text-[11px] text-emerald-300 font-medium">
             <Sparkles className="w-4 h-4 text-emerald-400 shrink-0" />
-            <span>Includes WIPO PCT/NZ2025/000001 & NZBN 9429051408892 Humanitarian Open Access Seal</span>
+            <span>Includes WIPO PCT/NZ2025/000001 & NZBN 9429048181570 Humanitarian Open Access Seal</span>
           </div>
         </div>
 

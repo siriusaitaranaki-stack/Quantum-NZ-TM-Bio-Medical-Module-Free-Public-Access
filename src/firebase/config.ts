@@ -23,7 +23,7 @@ export const firebaseConfig = {
   measurementId: firebaseConfigJson.measurementId
 };
 
-export const databaseId = firebaseConfigJson.firestoreDatabaseId || '(default)';
+export const databaseId = (firebaseConfigJson as any).firestoreDatabaseId || '(default)';
 
 // Initialize Firebase App
 export const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);

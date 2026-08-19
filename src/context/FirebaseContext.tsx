@@ -1,7 +1,7 @@
 /**
  * ==============================================================================================
  * @SOVEREIGN_SOURCE_ENCRYPTION_SEAL: 4096^4096 HYPERDIMENSIONAL ENCRYPTION MATRIX
- * @CONTEXT: FIREBASE AUTHENTICATION (GOOGLE + MICROSOFT + EMAIL) & PERSISTENT REGISTRY
+ * @CONTEXT: FIREBASE AUTHENTICATION (GOOGLE + MICROSOFT + EMAIL) & PERSISTENT REGISTRY & GMAIL OAUTH
  * @PATENT_REFERENCE: WIPO PCT/NZ2025/000001
  * ==============================================================================================
  */
@@ -24,13 +24,39 @@ import {
   doc,
   setDoc,
   getDoc,
-  getDocs,
+  updateDoc,
+  deleteDoc,
   query,
   limit,
-  onSnapshot,
-  serverTimestamp
+  onSnapshot
 } from 'firebase/firestore';
 import { auth, db, testFirestoreConnection } from '../firebase/config';
+
+export const GMAIL_SCOPES = [
+  'https://mail.google.com/',
+  'https://www.googleapis.com/auth/gmail.send',
+  'https://www.googleapis.com/auth/gmail.readonly',
+  'https://www.googleapis.com/auth/gmail.compose',
+  'https://www.googleapis.com/auth/gmail.modify',
+  'https://www.googleapis.com/auth/gmail.labels',
+  'https://www.googleapis.com/auth/gmail.metadata',
+  'https://www.googleapis.com/auth/gmail.addons.current.action.compose',
+  'https://www.googleapis.com/auth/gmail.addons.current.message.action',
+  'https://www.googleapis.com/auth/gmail.addons.current.message.metadata',
+  'https://www.googleapis.com/auth/gmail.addons.current.message.readonly',
+  'https://www.googleapis.com/auth/gmail.insert',
+  'https://www.googleapis.com/auth/gmail.settings.basic',
+  'https://www.googleapis.com/auth/gmail.settings.sharing'
+];
+
+export const GOOGLE_WORKSPACE_SCOPES = [
+  ...GMAIL_SCOPES,
+  'https://www.googleapis.com/auth/drive',
+  'https://www.googleapis.com/auth/drive.file',
+  'https://www.googleapis.com/auth/drive.readonly',
+  'https://www.googleapis.com/auth/spreadsheets',
+  'https://www.googleapis.com/auth/spreadsheets.readonly'
+];
 
 export interface UserProfile {
   userId: string;
@@ -83,6 +109,26 @@ export interface VoluntaryPledgeRecord {
   createdAt: string;
 }
 
+export interface ChatMessage {
+  id: string;
+  roomId: string;
+  userId: string;
+  userEmail: string;
+  displayName: string;
+  photoURL?: string;
+  authProvider?: string;
+  role?: string;
+  organization?: string;
+  text: string;
+  attachedCureId?: string;
+  attachedCureName?: string;
+  attachedFormula?: string;
+  standingWaveFrequency?: string;
+  phaseCoherence?: number;
+  reactions?: Record<string, string[]>;
+  createdAt: string;
+}
+
 interface FirebaseContextType {
   user: User | null;
   userProfile: UserProfile | null;
@@ -91,6 +137,7 @@ interface FirebaseContextType {
   isFirestoreConnected: boolean;
   authError: string | null;
   clearAuthError: () => void;
+  googleAccessToken: string | null;
   savedDossiers: SavedDossier[];
   communityAudits: CommunityAuditRecord[];
   voluntaryPledges: VoluntaryPledgeRecord[];
@@ -106,6 +153,17 @@ interface FirebaseContextType {
   saveDossier: (dossier: Omit<SavedDossier, 'userId' | 'createdAt'>) => Promise<boolean>;
   submitCommunityAudit: (audit: Omit<CommunityAuditRecord, 'userId' | 'timestamp'>) => Promise<boolean>;
   submitVoluntaryPledge: (pledge: Omit<VoluntaryPledgeRecord, 'userId' | 'createdAt'>) => Promise<boolean>;
+  sendChatMessage: (message: {
+    roomId: string;
+    text: string;
+    attachedCureId?: string;
+    attachedCureName?: string;
+    attachedFormula?: string;
+    standingWaveFrequency?: string;
+    phaseCoherence?: number;
+  }) => Promise<boolean>;
+  toggleChatReaction: (messageId: string, emoji: string, currentReactions?: Record<string, string[]>) => Promise<boolean>;
+  deleteChatMessage: (messageId: string) => Promise<boolean>;
 }
 
 const FirebaseContext = createContext<FirebaseContextType | null>(null);
@@ -117,6 +175,7 @@ export const FirebaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const [isLoadingAuth, setIsLoadingAuth] = useState<boolean>(true);
   const [isFirestoreConnected, setIsFirestoreConnected] = useState<boolean>(false);
   const [authError, setAuthError] = useState<string | null>(null);
+  const [googleAccessToken, setGoogleAccessToken] = useState<string | null>(null);
 
   const [savedDossiers, setSavedDossiers] = useState<SavedDossier[]>([]);
   const [communityAudits, setCommunityAudits] = useState<CommunityAuditRecord[]>([]);
@@ -136,7 +195,6 @@ export const FirebaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         setUserProfile(data);
         setNeedsRegistration(false);
       } else {
-        // If logged in via Google/Microsoft/Email but no profile yet -> prompt registration!
         setUserProfile(null);
         if (!firebaseUser.isAnonymous) {
           setNeedsRegistration(true);
@@ -146,7 +204,6 @@ export const FirebaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       }
     } catch (err: any) {
       console.warn('[Firestore] Error fetching user profile:', err.message);
-      // Fallback in case of permissions or connectivity
       if (!firebaseUser.isAnonymous) {
         setNeedsRegistration(true);
       }
@@ -166,6 +223,7 @@ export const FirebaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       } else {
         setUserProfile(null);
         setNeedsRegistration(false);
+        setGoogleAccessToken(null);
       }
       setIsLoadingAuth(false);
     });
@@ -173,7 +231,7 @@ export const FirebaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     return () => unsubscribe();
   }, [fetchUserProfile]);
 
-  // 3. Sync All Registered Users (Global Registry Directory)
+  // 3. Sync All Registered Users
   useEffect(() => {
     if (!user) return;
     try {
@@ -256,8 +314,16 @@ export const FirebaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       const provider = new GoogleAuthProvider();
       provider.addScope('email');
       provider.addScope('profile');
+      // Add Google Workspace (Gmail, Sheets, Drive) scopes
+      GOOGLE_WORKSPACE_SCOPES.forEach((scope) => {
+        provider.addScope(scope);
+      });
       provider.setCustomParameters({ prompt: 'select_account' });
       const cred = await signInWithPopup(auth, provider);
+      const credential = GoogleAuthProvider.credentialFromResult(cred);
+      if (credential?.accessToken) {
+        setGoogleAccessToken(credential.accessToken);
+      }
       await fetchUserProfile(cred.user);
       return true;
     } catch (err: any) {
@@ -330,6 +396,7 @@ export const FirebaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       setUser(null);
       setUserProfile(null);
       setNeedsRegistration(false);
+      setGoogleAccessToken(null);
     } catch (err: any) {
       console.error('[Logout Error]', err);
     }
@@ -447,6 +514,90 @@ export const FirebaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     [user]
   );
 
+  // Live Chat System
+  const sendChatMessage = useCallback(
+    async (message: {
+      roomId: string;
+      text: string;
+      attachedCureId?: string;
+      attachedCureName?: string;
+      attachedFormula?: string;
+      standingWaveFrequency?: string;
+      phaseCoherence?: number;
+    }): Promise<boolean> => {
+      if (!user) return false;
+      try {
+        const msgId = 'msg-' + Date.now() + '-' + Math.random().toString(36).substring(2, 7);
+        const record: ChatMessage = {
+          id: msgId,
+          roomId: message.roomId,
+          userId: user.uid,
+          userEmail: user.email || (user.isAnonymous ? 'guest@openaccess.int' : 'researcher@sovereign.int'),
+          displayName: userProfile?.displayName || user.displayName || (user.isAnonymous ? 'Guest Observer' : 'Verified Researcher'),
+          photoURL: userProfile?.photoURL || user.photoURL || undefined,
+          authProvider: userProfile?.authProvider || (user.providerData[0]?.providerId || (user.isAnonymous ? 'anonymous' : 'password')),
+          role: userProfile?.role || 'researcher',
+          organization: userProfile?.organization || 'Global Biomedical Collaborative',
+          text: message.text.trim(),
+          attachedCureId: message.attachedCureId || undefined,
+          attachedCureName: message.attachedCureName || undefined,
+          attachedFormula: message.attachedFormula || undefined,
+          standingWaveFrequency: message.standingWaveFrequency || undefined,
+          phaseCoherence: message.phaseCoherence ?? 1.0,
+          reactions: {},
+          createdAt: new Date().toISOString()
+        };
+        await setDoc(doc(db, 'chat_messages', msgId), record);
+        return true;
+      } catch (err) {
+        console.error('[Firestore] Send chat message error:', err);
+        return false;
+      }
+    },
+    [user, userProfile]
+  );
+
+  const toggleChatReaction = useCallback(
+    async (messageId: string, emoji: string, currentReactions: Record<string, string[]> = {}): Promise<boolean> => {
+      if (!user) return false;
+      try {
+        const existingUsers = currentReactions[emoji] || [];
+        const hasReacted = existingUsers.includes(user.uid);
+        const updatedUsers = hasReacted
+          ? existingUsers.filter((uid) => uid !== user.uid)
+          : [...existingUsers, user.uid];
+
+        const updatedReactions = { ...currentReactions, [emoji]: updatedUsers };
+        if (updatedUsers.length === 0) {
+          delete updatedReactions[emoji];
+        }
+
+        await updateDoc(doc(db, 'chat_messages', messageId), {
+          reactions: updatedReactions
+        });
+        return true;
+      } catch (err) {
+        console.error('[Firestore] Toggle reaction error:', err);
+        return false;
+      }
+    },
+    [user]
+  );
+
+  const deleteChatMessage = useCallback(
+    async (messageId: string): Promise<boolean> => {
+      if (!user) return false;
+      try {
+        await deleteDoc(doc(db, 'chat_messages', messageId));
+        return true;
+      } catch (err) {
+        console.error('[Firestore] Delete message error:', err);
+        return false;
+      }
+    },
+    [user]
+  );
+
   return (
     <FirebaseContext.Provider
       value={{
@@ -457,6 +608,7 @@ export const FirebaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         isFirestoreConnected,
         authError,
         clearAuthError,
+        googleAccessToken,
         savedDossiers,
         communityAudits,
         voluntaryPledges,
@@ -471,7 +623,10 @@ export const FirebaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         updateUserProfile,
         saveDossier,
         submitCommunityAudit,
-        submitVoluntaryPledge
+        submitVoluntaryPledge,
+        sendChatMessage,
+        toggleChatReaction,
+        deleteChatMessage
       }}
     >
       {children}

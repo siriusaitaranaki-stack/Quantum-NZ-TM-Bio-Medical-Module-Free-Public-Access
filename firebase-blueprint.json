@@ -193,6 +193,83 @@
         }
       },
       "required": ["id", "userId", "amountUsd", "billingAccountId", "isMandatory", "createdAt"]
+    },
+    "chatMessage": {
+      "title": "ChatMessage",
+      "description": "Live real-time collaborative chat message verified with Google or Microsoft authentication",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique message ID",
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "roomId": {
+          "type": "string",
+          "description": "Chat channel or room identifier"
+        },
+        "userId": {
+          "type": "string",
+          "description": "Authenticated user UID"
+        },
+        "userEmail": {
+          "type": "string",
+          "description": "Authenticated email address"
+        },
+        "displayName": {
+          "type": "string",
+          "description": "Researcher display name"
+        },
+        "photoURL": {
+          "type": "string",
+          "description": "Avatar image URL"
+        },
+        "authProvider": {
+          "type": "string",
+          "description": "Authentication provider (@google.com, @microsoft.com, etc.)"
+        },
+        "role": {
+          "type": "string",
+          "description": "Researcher role designation"
+        },
+        "organization": {
+          "type": "string",
+          "description": "Affiliated institution or research organization"
+        },
+        "text": {
+          "type": "string",
+          "description": "Message text body"
+        },
+        "attachedCureId": {
+          "type": "string",
+          "description": "Optional attached disease protocol ID"
+        },
+        "attachedCureName": {
+          "type": "string",
+          "description": "Optional attached disease protocol name"
+        },
+        "attachedFormula": {
+          "type": "string",
+          "description": "Optional chemical SMILES or mathematical formula"
+        },
+        "standingWaveFrequency": {
+          "type": "string",
+          "description": "Optional standing wave frequency citation"
+        },
+        "phaseCoherence": {
+          "type": "number",
+          "description": "Phase coherence rating (1.000000)"
+        },
+        "reactions": {
+          "type": "object",
+          "description": "Reaction counts or emoji tokens"
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "ISO timestamp"
+        }
+      },
+      "required": ["id", "roomId", "userId", "userEmail", "displayName", "text", "createdAt"]
     }
   },
   "firestore": {
@@ -211,6 +288,10 @@
     "/voluntary_pledges/{pledgeId}": {
       "schema": "voluntaryPledge",
       "description": "Non-mandatory voluntary contributions to support Google Cloud compute infrastructure"
+    },
+    "/chat_messages/{messageId}": {
+      "schema": "chatMessage",
+      "description": "Live real-time messages authenticated with Google & Microsoft accounts"
     }
   }
 }

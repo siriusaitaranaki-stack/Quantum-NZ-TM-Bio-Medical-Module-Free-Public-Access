@@ -11,18 +11,20 @@
 
 import React, { useState } from 'react';
 import { SOVEREIGN_PATENT_HEADER, LEGAL_SEALS } from '../data/patentData';
-import { ShieldCheck, Award, FileText, CheckCircle2, Lock, Globe, ExternalLink, Copy, Check, Heart } from 'lucide-react';
+import { ShieldCheck, Award, FileText, CheckCircle2, Lock, Globe, ExternalLink, Copy, Check, Heart, Github, GitFork } from 'lucide-react';
 
 interface PatentHeaderProps {
   onOpenLegalModal: () => void;
   onOpenDonationModal?: () => void;
   onOpenBillingModal?: () => void;
+  onOpenGitHubModal?: () => void;
 }
 
 export const PatentHeader: React.FC<PatentHeaderProps> = ({
   onOpenLegalModal,
   onOpenDonationModal,
-  onOpenBillingModal
+  onOpenBillingModal,
+  onOpenGitHubModal
 }) => {
   const [copiedHash, setCopiedHash] = useState(false);
 
@@ -82,6 +84,16 @@ export const PatentHeader: React.FC<PatentHeaderProps> = ({
 
           {/* Quick Action Button for Legal Certificate & Donation */}
           <div className="flex flex-wrap items-center gap-2">
+            {onOpenGitHubModal && (
+              <button
+                onClick={onOpenGitHubModal}
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-bold text-xs sm:text-sm shadow-lg shadow-purple-950/60 border border-purple-400/40 transition-all hover:scale-[1.03] cursor-pointer"
+              >
+                <Github className="w-4 h-4 text-purple-200" />
+                <span>Branch On GitHub</span>
+              </button>
+            )}
+
             {onOpenDonationModal && (
               <button
                 onClick={onOpenDonationModal}

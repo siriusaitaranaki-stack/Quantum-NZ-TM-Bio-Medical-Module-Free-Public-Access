@@ -34,6 +34,7 @@ import { GoogleSheetsIntegrationModal } from './components/GoogleSheetsIntegrati
 import { GoogleDocsIntegrationModal } from './components/GoogleDocsIntegrationModal';
 import { GoogleFormsIntegrationModal } from './components/GoogleFormsIntegrationModal';
 import { GoogleChatIntegrationModal } from './components/GoogleChatIntegrationModal';
+import { GitHubBranchingModal } from './components/GitHubBranchingModal';
 import { AudioNarratorProvider } from './context/AudioNarratorContext';
 import { BiomedicalWebSocketProvider } from './context/BiomedicalWebSocketContext';
 import { FirebaseProvider, useFirebase } from './context/FirebaseContext';
@@ -73,6 +74,7 @@ function AppContent() {
   const [isDocsModalOpen, setIsDocsModalOpen] = useState<boolean>(false);
   const [isFormsModalOpen, setIsFormsModalOpen] = useState<boolean>(false);
   const [isGoogleChatModalOpen, setIsGoogleChatModalOpen] = useState<boolean>(false);
+  const [isGitHubModalOpen, setIsGitHubModalOpen] = useState<boolean>(false);
   const [simulatorDiseaseId, setSimulatorDiseaseId] = useState<string>('nsclc');
   const [simulatorMode, setSimulatorMode] = useState<'single' | 'combination' | 'patient'>('single');
 
@@ -98,6 +100,7 @@ function AppContent() {
         onOpenLegalModal={() => setIsLegalModalOpen(true)}
         onOpenDonationModal={() => setIsDonationModalOpen(true)}
         onOpenBillingModal={() => setIsBillingModalOpen(true)}
+        onOpenGitHubModal={() => setIsGitHubModalOpen(true)}
       />
 
       {/* 2. Navigation Bar & Quick Tools */}
@@ -373,6 +376,11 @@ function AppContent() {
       <GoogleChatIntegrationModal
         isOpen={isGoogleChatModalOpen}
         onClose={() => setIsGoogleChatModalOpen(false)}
+      />
+
+      <GitHubBranchingModal
+        isOpen={isGitHubModalOpen}
+        onClose={() => setIsGitHubModalOpen(false)}
       />
     </div>
   );

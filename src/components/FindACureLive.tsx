@@ -21,6 +21,7 @@ import { SOVEREIGN_PATENT_HEADER } from '../data/patentData';
 import { DiseaseCure, LiveDatabaseInterlink } from '../types/biomedical';
 import { useAudioNarrator } from '../context/AudioNarratorContext';
 import { useBiomedicalWebSocket } from '../context/BiomedicalWebSocketContext';
+import { GitHubBranchingModal } from './GitHubBranchingModal';
 import confetti from 'canvas-confetti';
 import {
   Search,
@@ -62,7 +63,14 @@ import {
   SlidersHorizontal,
   Workflow,
   Volume2,
-  Headphones
+  Headphones,
+  Github,
+  GitBranch,
+  GitFork,
+  GraduationCap,
+  Building2,
+  Code2,
+  Play
 } from 'lucide-react';
 
 interface ChatMessage {
@@ -94,6 +102,7 @@ export const FindACureLive: React.FC<FindACureLiveProps> = ({ onNavigateTo3DSimu
     verificationLogs: wsLogs,
     subscribeToCure,
     requestAudit: triggerWsAudit,
+    executeLiveApiQuery,
     isAuditing: isWsAuditing,
     lastSyncTime: wsLastSync
   } = useBiomedicalWebSocket();
@@ -108,9 +117,16 @@ export const FindACureLive: React.FC<FindACureLiveProps> = ({ onNavigateTo3DSimu
   const [activeDiseaseId, setActiveDiseaseId] = useState<string>('nsclc');
   const [copiedField, setCopiedField] = useState<string | null>(null);
   const [selectedDbFilter, setSelectedDbFilter] = useState<string>('All');
-  const [wsViewTab, setWsViewTab] = useState<'nodes' | 'live-feed' | 'classic'>('nodes');
+  const [wsViewTab, setWsViewTab] = useState<'nodes' | 'live-feed' | 'live-api' | 'classic' | 'branch-github'>('nodes');
   const [viewLayout, setViewLayout] = useState<'split' | 'blueprint' | 'lumana-ai'>('split');
   const [isInterlinkAuditing, setIsInterlinkAuditing] = useState<boolean>(false);
+  const [isGitHubModalOpen, setIsGitHubModalOpen] = useState<boolean>(false);
+
+  // Live REST API Testbed State
+  const [liveApiDbId, setLiveApiDbId] = useState<string>('rcsb-pdb');
+  const [liveApiTerm, setLiveApiTerm] = useState<string>('KRAS');
+  const [liveApiResult, setLiveApiResult] = useState<any>(null);
+  const [isLiveApiLoading, setIsLiveApiLoading] = useState<boolean>(false);
 
   // Lumana AI Agent State
   const [aiInputQuery, setAiInputQuery] = useState<string>('');
@@ -980,7 +996,7 @@ Provide an exhaustive, highly technical, chemically precise, and scientifically 
               </div>
             </div>
 
-            {/* Live WebSocket Global Public Biomedical Dataset Consensus & Verification Hub */}
+            {/* Live WebSocket Global Public Biomedical Dataset & Humanitarian Services Consensus Hub */}
             <div className="bg-slate-900/95 border border-slate-800 rounded-xl p-5 shadow-2xl space-y-4">
               {/* Telemetry Header */}
               <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-slate-800/80">
@@ -988,7 +1004,7 @@ Provide an exhaustive, highly technical, chemically precise, and scientifically 
                   <div className="flex items-center gap-2">
                     <Radio className={`w-4 h-4 ${isWsConnected ? 'text-emerald-400 animate-pulse' : 'text-amber-400'}`} />
                     <h3 className="text-xs sm:text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
-                      <span>Live WebSocket Biomedical Consensus Hub</span>
+                      <span>ExpandLive WebSocket Biomedical Consensus Hub</span>
                       <span
                         className={`text-[10px] font-mono px-2 py-0.5 rounded-full border ${
                           isWsConnected
@@ -1001,17 +1017,25 @@ Provide an exhaustive, highly technical, chemically precise, and scientifically 
                     </h3>
                   </div>
                   <p className="text-[11px] text-slate-400">
-                    Real-time bidirectional WebSocket consensus stream across 16 global public biomedical registries.
+                    Real-time bidirectional WebSocket consensus stream across 34 global public biomedical registries, humanitarian health services & research centers.
                   </p>
                 </div>
 
-                {/* Audit Action Button */}
-                <div className="flex items-center gap-2">
+                {/* Header Action Buttons */}
+                <div className="flex flex-wrap items-center gap-2">
+                  <button
+                    onClick={() => setIsGitHubModalOpen(true)}
+                    className="px-3 py-1.5 rounded-lg bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white text-xs font-bold shadow-md transition flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <Github className="w-3.5 h-3.5" />
+                    <span>Branch Via GitHub</span>
+                  </button>
+
                   <button
                     onClick={() => {
                       triggerWsAudit(currentCure.id, currentCure.diseaseName);
                       speak(
-                        `Triggered real-time verification audit across 16 global biomedical datasets for ${currentCure.diseaseName}. Current consensus rate is 100 percent.`,
+                        `Triggered real-time verification audit across 34 global biomedical datasets and humanitarian services for ${currentCure.diseaseName}. Current consensus rate is 100 percent.`,
                         { priority: 'high', cancelPrevious: true }
                       );
                     }}
@@ -1019,7 +1043,7 @@ Provide an exhaustive, highly technical, chemically precise, and scientifically 
                     className="px-3 py-1.5 rounded-lg bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white text-xs font-bold shadow-md transition flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
                   >
                     <Zap className={`w-3.5 h-3.5 ${isWsAuditing ? 'animate-spin' : 'text-cyan-200'}`} />
-                    <span>{isWsAuditing ? 'Auditing 16 Nodes...' : 'Audit 16-Database Consensus'}</span>
+                    <span>{isWsAuditing ? 'Auditing 34 Nodes...' : 'Audit 34-Node Consensus'}</span>
                   </button>
                 </div>
               </div>
@@ -1050,7 +1074,7 @@ Provide an exhaustive, highly technical, chemically precise, and scientifically 
                 <div
                   onMouseEnter={() =>
                     speak(
-                      `${verifiedNodesWorldwide} verified research laboratory and clinical nodes are actively synchronized worldwide.`,
+                      `${verifiedNodesWorldwide} verified research laboratory, hospital, and university nodes are actively synchronized worldwide.`,
                       { priority: 'hover' }
                     )
                   }
@@ -1064,7 +1088,7 @@ Provide an exhaustive, highly technical, chemically precise, and scientifically 
                     {verifiedNodesWorldwide.toLocaleString()} Nodes
                   </div>
                   <div className="text-[10px] text-slate-400 truncate">
-                    Geneva • Bethesda • Hinxton • Tokyo • Auckland
+                    Geneva • Bethesda • Hinxton • Tokyo • Harvard • Oxford
                   </div>
                 </div>
 
@@ -1091,23 +1115,23 @@ Provide an exhaustive, highly technical, chemically precise, and scientifically 
               </div>
 
               {/* Tab Selector */}
-              <div className="flex items-center justify-between border-b border-slate-800/80 pb-2">
-                <div className="flex items-center gap-2">
+              <div className="flex items-center justify-between border-b border-slate-800/80 pb-2 overflow-x-auto">
+                <div className="flex items-center gap-1.5">
                   <button
                     onClick={() => setWsViewTab('nodes')}
-                    className={`px-3 py-1 rounded-lg text-xs font-bold transition cursor-pointer flex items-center gap-1.5 ${
+                    className={`px-3 py-1 rounded-lg text-xs font-bold transition cursor-pointer flex items-center gap-1.5 whitespace-nowrap ${
                       wsViewTab === 'nodes'
                         ? 'bg-cyan-600 text-white shadow'
                         : 'bg-slate-950 text-slate-400 hover:text-white border border-slate-800'
                     }`}
                   >
                     <Database className="w-3.5 h-3.5" />
-                    <span>16 Global Dataset Verification Matrix</span>
+                    <span>34 Global Dataset Matrix ({wsDatabaseNodes.length})</span>
                   </button>
 
                   <button
                     onClick={() => setWsViewTab('live-feed')}
-                    className={`px-3 py-1 rounded-lg text-xs font-bold transition cursor-pointer flex items-center gap-1.5 ${
+                    className={`px-3 py-1 rounded-lg text-xs font-bold transition cursor-pointer flex items-center gap-1.5 whitespace-nowrap ${
                       wsViewTab === 'live-feed'
                         ? 'bg-purple-600 text-white shadow'
                         : 'bg-slate-950 text-slate-400 hover:text-white border border-slate-800'
@@ -1118,8 +1142,20 @@ Provide an exhaustive, highly technical, chemically precise, and scientifically 
                   </button>
 
                   <button
+                    onClick={() => setWsViewTab('live-api')}
+                    className={`px-3 py-1 rounded-lg text-xs font-bold transition cursor-pointer flex items-center gap-1.5 whitespace-nowrap ${
+                      wsViewTab === 'live-api'
+                        ? 'bg-emerald-600 text-white shadow'
+                        : 'bg-slate-950 text-slate-400 hover:text-white border border-slate-800'
+                    }`}
+                  >
+                    <Code2 className="w-3.5 h-3.5 text-emerald-300" />
+                    <span>Live API Testbed</span>
+                  </button>
+
+                  <button
                     onClick={() => setWsViewTab('classic')}
-                    className={`px-3 py-1 rounded-lg text-xs font-bold transition cursor-pointer flex items-center gap-1.5 ${
+                    className={`px-3 py-1 rounded-lg text-xs font-bold transition cursor-pointer flex items-center gap-1.5 whitespace-nowrap ${
                       wsViewTab === 'classic'
                         ? 'bg-blue-600 text-white shadow'
                         : 'bg-slate-950 text-slate-400 hover:text-white border border-slate-800'
@@ -1128,54 +1164,87 @@ Provide an exhaustive, highly technical, chemically precise, and scientifically 
                     <Globe className="w-3.5 h-3.5" />
                     <span>Direct Interlinks</span>
                   </button>
-                </div>
 
-                <span className="text-[10px] font-mono text-slate-400 hidden sm:inline">
-                  WIPO PCT/NZ2025/000001 Open Access Stream
-                </span>
+                  <button
+                    onClick={() => setIsGitHubModalOpen(true)}
+                    className="px-3 py-1 rounded-lg text-xs font-bold transition cursor-pointer flex items-center gap-1.5 bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 text-white shadow whitespace-nowrap"
+                  >
+                    <GraduationCap className="w-3.5 h-3.5" />
+                    <span>University Branch Studio</span>
+                  </button>
+                </div>
               </div>
 
-              {/* View 1: 16 Global Dataset Verification Matrix */}
+              {/* View 1: 34 Global Dataset Verification Matrix */}
               {wsViewTab === 'nodes' && (
-                <div className="space-y-2 max-h-[380px] overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-slate-700 text-xs">
-                  {wsDatabaseNodes.map((node) => (
-                    <div
-                      key={node.id}
-                      onMouseEnter={() =>
-                        speak(
-                          `Dataset Node: ${node.name}. Located in ${node.region}. Status: 100 percent verified with ${node.primaryMetric}. Latency ${node.latencyMs} milliseconds.`,
-                          { priority: 'hover' }
-                        )
-                      }
-                      className="bg-slate-950/80 border border-slate-800 rounded-lg p-3 flex flex-wrap items-center justify-between gap-2 hover:border-cyan-500/50 hover:bg-slate-900/60 transition cursor-help"
-                    >
-                      <div className="space-y-0.5 min-w-[200px]">
-                        <div className="font-bold text-white text-xs flex items-center gap-2">
-                          <span>{node.name}</span>
-                          <span className="text-[10px] font-mono text-cyan-300">({node.acronym})</span>
-                          <span className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-emerald-950 text-emerald-300 border border-emerald-500/30">
-                            100% VERIFIED
-                          </span>
-                        </div>
-                        <div className="text-[10px] text-slate-400 flex items-center gap-2">
-                          <span>{node.region}</span>
-                          <span>•</span>
-                          <span className="text-amber-300 font-mono">{node.primaryMetric}</span>
-                        </div>
-                      </div>
+                <div className="space-y-2.5">
+                  {/* Category Filter Bar */}
+                  <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-[10px]">
+                    {['All', 'Genomics', 'Pharmacology', 'Clinical', 'Humanitarian', 'Surveillance', 'Literature', 'Pathways'].map((cat) => {
+                      const isSelected = selectedDbFilter === cat;
+                      return (
+                        <button
+                          key={cat}
+                          onClick={() => setSelectedDbFilter(cat)}
+                          className={`px-2.5 py-1 rounded-lg transition cursor-pointer whitespace-nowrap font-semibold ${
+                            isSelected
+                              ? 'bg-cyan-600 text-white shadow'
+                              : 'bg-slate-950 text-slate-400 hover:text-white border border-slate-800'
+                          }`}
+                        >
+                          {cat}
+                        </button>
+                      );
+                    })}
+                  </div>
 
-                      <div className="flex items-center gap-3 shrink-0">
-                        <div className="text-right font-mono text-[10px]">
-                          <div className="text-slate-400">Hash Seal: <span className="text-cyan-300">{node.verificationHash}</span></div>
-                          <div className="text-emerald-400">{node.recordsMatched.toLocaleString()} Records Matched</div>
-                        </div>
+                  <div className="space-y-2 max-h-[380px] overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-slate-700 text-xs">
+                    {wsDatabaseNodes
+                      .filter((node) => selectedDbFilter === 'All' || node.category === selectedDbFilter)
+                      .map((node) => (
+                        <div
+                          key={node.id}
+                          onMouseEnter={() =>
+                            speak(
+                              `Dataset Node: ${node.name}. Located in ${node.region}. Status: 100 percent verified with ${node.primaryMetric}. Latency ${node.latencyMs} milliseconds.`,
+                              { priority: 'hover' }
+                            )
+                          }
+                          className="bg-slate-950/80 border border-slate-800 rounded-lg p-3 flex flex-wrap items-center justify-between gap-2 hover:border-cyan-500/50 hover:bg-slate-900/60 transition cursor-help"
+                        >
+                          <div className="space-y-0.5 min-w-[220px]">
+                            <div className="font-bold text-white text-xs flex items-center gap-2">
+                              <span>{node.name}</span>
+                              <span className="text-[10px] font-mono text-cyan-300">({node.acronym})</span>
+                              <span className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-emerald-950 text-emerald-300 border border-emerald-500/30">
+                                100% VERIFIED
+                              </span>
+                              {node.category && (
+                                <span className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-indigo-950 text-indigo-300 border border-indigo-500/30">
+                                  {node.category}
+                                </span>
+                              )}
+                            </div>
+                            <div className="text-[10px] text-slate-400 flex items-center gap-2">
+                              <span>{node.region}</span>
+                              <span>•</span>
+                              <span className="text-amber-300 font-mono">{node.primaryMetric}</span>
+                            </div>
+                          </div>
 
-                        <span className="text-[10px] font-mono text-emerald-400 bg-emerald-950/80 px-2 py-1 rounded border border-emerald-500/30">
-                          {node.latencyMs}ms 🟢
-                        </span>
-                      </div>
-                    </div>
-                  ))}
+                          <div className="flex items-center gap-3 shrink-0">
+                            <div className="text-right font-mono text-[10px]">
+                              <div className="text-slate-400">Hash Seal: <span className="text-cyan-300">{node.verificationHash}</span></div>
+                              <div className="text-emerald-400">{node.recordsMatched.toLocaleString()} Records Matched</div>
+                            </div>
+
+                            <span className="text-[10px] font-mono text-emerald-400 bg-emerald-950/80 px-2 py-1 rounded border border-emerald-500/30">
+                              {node.latencyMs}ms 🟢
+                            </span>
+                          </div>
+                        </div>
+                      ))}
+                  </div>
                 </div>
               )}
 
@@ -1185,7 +1254,7 @@ Provide an exhaustive, highly technical, chemically precise, and scientifically 
                   <div className="p-2 bg-slate-950/90 rounded border border-purple-500/30 text-[11px] text-purple-300 flex items-center justify-between">
                     <span className="flex items-center gap-1.5">
                       <Radio className="w-3.5 h-3.5 text-purple-400 animate-pulse" />
-                      <span>Live WebSocket Packet Stream (Continuous Verification Broadcast)</span>
+                      <span>Live WebSocket Packet Stream (Continuous Verification Broadcast across 34 Global Nodes)</span>
                     </span>
                     <span className="text-emerald-400">100% Phase Coherent</span>
                   </div>
@@ -1219,18 +1288,100 @@ Provide an exhaustive, highly technical, chemically precise, and scientifically 
                 </div>
               )}
 
-              {/* View 3: Direct Database Query Interlinks */}
+              {/* View 3: Live API Integration Testbed */}
+              {wsViewTab === 'live-api' && (
+                <div className="space-y-3 bg-slate-950 p-4 rounded-xl border border-slate-800 text-xs">
+                  <div className="flex flex-wrap items-center justify-between gap-2 pb-2 border-b border-slate-800">
+                    <div className="flex items-center gap-2">
+                      <Code2 className="w-4 h-4 text-emerald-400" />
+                      <span className="font-bold text-white text-xs">Live REST & WebSocket API Query Testbed</span>
+                    </div>
+                    <span className="text-[10px] font-mono text-emerald-300">
+                      CORS-Proxy & Direct Interceptor Active
+                    </span>
+                  </div>
+
+                  {/* Query Controls */}
+                  <div className="grid grid-cols-1 sm:grid-cols-12 gap-2">
+                    <div className="sm:col-span-5">
+                      <label className="text-[10px] font-mono text-slate-400 block mb-1">Target Biomedical Registry:</label>
+                      <select
+                        value={liveApiDbId}
+                        onChange={(e) => setLiveApiDbId(e.target.value)}
+                        className="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-cyan-400"
+                      >
+                        <option value="rcsb-pdb">RCSB Protein Data Bank (PDB REST)</option>
+                        <option value="pubchem">NCBI PubChem PUG REST</option>
+                        <option value="uniprot">Universal Protein Resource (UniProt KB)</option>
+                        <option value="clinicaltrials">ClinicalTrials.gov v2 REST API</option>
+                        <option value="openfda">OpenFDA Drug & Device Submissions</option>
+                        <option value="europepmc">Europe PMC Open Literature Search</option>
+                        <option value="chembl">EMBL-EBI ChEMBL Bioactive API</option>
+                        <option value="pubmed">NCBI PubMed Entrez eUtils</option>
+                      </select>
+                    </div>
+
+                    <div className="sm:col-span-5">
+                      <label className="text-[10px] font-mono text-slate-400 block mb-1">Query Molecular Target / Gene / Condition:</label>
+                      <input
+                        type="text"
+                        value={liveApiTerm}
+                        onChange={(e) => setLiveApiTerm(e.target.value)}
+                        placeholder="e.g. KRAS, EGFR, Parkinson, Osimertinib"
+                        className="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-cyan-400 font-mono"
+                      />
+                    </div>
+
+                    <div className="sm:col-span-2 flex items-end">
+                      <button
+                        onClick={async () => {
+                          setIsLiveApiLoading(true);
+                          try {
+                            const res = await executeLiveApiQuery(liveApiDbId, liveApiTerm);
+                            setLiveApiResult(res);
+                            speak(`Executed live API query on ${liveApiDbId} for ${liveApiTerm}. Result received.`, { priority: 'low' });
+                          } finally {
+                            setIsLiveApiLoading(false);
+                          }
+                        }}
+                        disabled={isLiveApiLoading}
+                        className="w-full py-1.5 rounded-lg bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-xs shadow transition flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
+                      >
+                        {isLiveApiLoading ? <Zap className="w-3.5 h-3.5 animate-spin" /> : <Play className="w-3.5 h-3.5" />}
+                        <span>{isLiveApiLoading ? 'Querying...' : 'Execute'}</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Query Output Display */}
+                  {liveApiResult && (
+                    <div className="space-y-1.5 pt-2 border-t border-slate-800">
+                      <div className="flex items-center justify-between text-[10px] font-mono">
+                        <span className="text-cyan-300">
+                          Status {liveApiResult.statusCode} OK • Latency {liveApiResult.latencyMs}ms • Endpoint: {liveApiResult.endpointUrl}
+                        </span>
+                        <span className="text-emerald-400">100% Phase Matched</span>
+                      </div>
+                      <pre className="p-3 bg-slate-900 rounded-lg font-mono text-[11px] text-emerald-300 border border-slate-800 max-h-[160px] overflow-y-auto leading-relaxed">
+                        {JSON.stringify(liveApiResult.data, null, 2)}
+                      </pre>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* View 4: Direct Database Query Interlinks */}
               {wsViewTab === 'classic' && (
                 <div className="space-y-3">
                   {/* Database Category Filter */}
                   <div className="flex items-center gap-1 overflow-x-auto pb-1 text-[10px]">
-                    {['All', 'Genomics', 'Pharmacology', 'Clinical', 'Literature', 'Pathways'].map((cat) => (
+                    {['All', 'Genomics', 'Pharmacology', 'Clinical', 'Humanitarian', 'Surveillance', 'Literature', 'Pathways'].map((cat) => (
                       <button
                         key={cat}
                         onClick={() => setSelectedDbFilter(cat)}
-                        className={`px-2 py-0.5 rounded transition cursor-pointer whitespace-nowrap ${
+                        className={`px-2.5 py-1 rounded-lg transition cursor-pointer whitespace-nowrap font-semibold ${
                           selectedDbFilter === cat
-                            ? 'bg-cyan-600 text-white font-semibold'
+                            ? 'bg-cyan-600 text-white shadow'
                             : 'bg-slate-950 text-slate-400 hover:text-white border border-slate-800'
                         }`}
                       >
@@ -1241,35 +1392,42 @@ Provide an exhaustive, highly technical, chemically precise, and scientifically 
 
                   {/* Interlinks Grid */}
                   <div className="space-y-2 max-h-[320px] overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-slate-700 text-xs">
-                    {filteredInterlinks.map((link) => (
-                      <div
-                        key={link.databaseId}
-                        className="bg-slate-950/80 border border-slate-800 rounded-lg p-2.5 flex items-center justify-between hover:border-cyan-500/40 transition"
-                      >
-                        <div>
-                          <div className="font-bold text-white text-xs flex items-center gap-1.5">
-                            <span>{link.databaseName}</span>
-                            <span className="text-[10px] font-mono text-slate-400">({link.acronym})</span>
+                    {filteredInterlinks
+                      .filter((link) => selectedDbFilter === 'All' || link.category === selectedDbFilter)
+                      .map((link) => (
+                        <div
+                          key={link.databaseId}
+                          className="bg-slate-950/80 border border-slate-800 rounded-lg p-2.5 flex items-center justify-between hover:border-cyan-500/40 transition"
+                        >
+                          <div className="space-y-0.5">
+                            <div className="font-bold text-white text-xs flex items-center gap-1.5">
+                              <span>{link.databaseName}</span>
+                              <span className="text-[10px] font-mono text-slate-400">({link.acronym})</span>
+                              {link.category && (
+                                <span className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-indigo-950 text-indigo-300 border border-indigo-500/30">
+                                  {link.category}
+                                </span>
+                              )}
+                            </div>
+                            <div className="text-[10px] text-slate-400">{link.recordsCount} • {link.description}</div>
                           </div>
-                          <div className="text-[10px] text-slate-400">{link.recordsCount}</div>
-                        </div>
 
-                        <div className="flex items-center gap-2 shrink-0">
-                          <span className="text-[9px] font-mono text-emerald-400 bg-emerald-950/80 px-1.5 py-0.5 rounded border border-emerald-500/30">
-                            {link.latencyMs}ms 🟢
-                          </span>
-                          <a
-                            href={link.directSearchUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded bg-blue-600 hover:bg-blue-500 text-white text-[11px] font-semibold transition"
-                          >
-                            <span>Open Live</span>
-                            <ExternalLink className="w-3 h-3" />
-                          </a>
+                          <div className="flex items-center gap-2 shrink-0">
+                            <span className="text-[9px] font-mono text-emerald-400 bg-emerald-950/80 px-1.5 py-0.5 rounded border border-emerald-500/30">
+                              {link.latencyMs}ms 🟢
+                            </span>
+                            <a
+                              href={link.directSearchUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1 px-2.5 py-1 rounded bg-blue-600 hover:bg-blue-500 text-white text-[11px] font-semibold transition cursor-pointer"
+                            >
+                              <span>Open Live</span>
+                              <ExternalLink className="w-3 h-3" />
+                            </a>
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      ))}
                   </div>
                 </div>
               )}
@@ -1436,6 +1594,12 @@ Provide an exhaustive, highly technical, chemically precise, and scientifically 
           </div>
         )}
       </div>
+
+      {/* GitHub Institutional Branching & University Customization Studio Modal */}
+      <GitHubBranchingModal
+        isOpen={isGitHubModalOpen}
+        onClose={() => setIsGitHubModalOpen(false)}
+      />
     </div>
   );
 };

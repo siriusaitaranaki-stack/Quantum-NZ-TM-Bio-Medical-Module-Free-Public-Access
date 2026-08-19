@@ -32,7 +32,8 @@ import {
   FileSpreadsheet,
   MessageSquare,
   FileText,
-  CheckSquare
+  CheckSquare,
+  Video
 } from 'lucide-react';
 import { useFirebase } from '../context/FirebaseContext';
 
@@ -59,6 +60,7 @@ interface NavigationProps {
   onOpenDocsModal: () => void;
   onOpenFormsModal: () => void;
   onOpenGoogleChatModal: () => void;
+  onOpenGoogleMeetModal: () => void;
 }
 
 export const Navigation: React.FC<NavigationProps> = ({
@@ -73,7 +75,8 @@ export const Navigation: React.FC<NavigationProps> = ({
   onOpenSheetsModal,
   onOpenDocsModal,
   onOpenFormsModal,
-  onOpenGoogleChatModal
+  onOpenGoogleChatModal,
+  onOpenGoogleMeetModal
 }) => {
   const { user, userProfile, googleAccessToken } = useFirebase();
 
@@ -227,6 +230,16 @@ export const Navigation: React.FC<NavigationProps> = ({
             >
               <MessageSquare className="w-3.5 h-3.5 text-teal-400" />
               <span className="hidden sm:inline">Chat</span>
+            </button>
+
+            {/* Google Meet Workspace Button */}
+            <button
+              onClick={onOpenGoogleMeetModal}
+              title="Google Workspace: Launch Instant Encrypted Clinical Review Rooms with Google Meet API v2"
+              className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-blue-950/80 hover:bg-blue-900 text-blue-300 border border-blue-500/40 text-xs font-semibold transition cursor-pointer"
+            >
+              <Video className="w-3.5 h-3.5 text-blue-400" />
+              <span className="hidden sm:inline">Meet</span>
             </button>
 
             {/* Gmail Workspace Dispatch Button */}

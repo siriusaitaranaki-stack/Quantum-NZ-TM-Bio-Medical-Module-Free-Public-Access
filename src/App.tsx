@@ -34,6 +34,7 @@ import { GoogleSheetsIntegrationModal } from './components/GoogleSheetsIntegrati
 import { GoogleDocsIntegrationModal } from './components/GoogleDocsIntegrationModal';
 import { GoogleFormsIntegrationModal } from './components/GoogleFormsIntegrationModal';
 import { GoogleChatIntegrationModal } from './components/GoogleChatIntegrationModal';
+import { GoogleMeetIntegrationModal } from './components/GoogleMeetIntegrationModal';
 import { GitHubBranchingModal } from './components/GitHubBranchingModal';
 import { AudioNarratorProvider } from './context/AudioNarratorContext';
 import { BiomedicalWebSocketProvider } from './context/BiomedicalWebSocketContext';
@@ -74,6 +75,7 @@ function AppContent() {
   const [isDocsModalOpen, setIsDocsModalOpen] = useState<boolean>(false);
   const [isFormsModalOpen, setIsFormsModalOpen] = useState<boolean>(false);
   const [isGoogleChatModalOpen, setIsGoogleChatModalOpen] = useState<boolean>(false);
+  const [isGoogleMeetModalOpen, setIsGoogleMeetModalOpen] = useState<boolean>(false);
   const [isGitHubModalOpen, setIsGitHubModalOpen] = useState<boolean>(false);
   const [simulatorDiseaseId, setSimulatorDiseaseId] = useState<string>('nsclc');
   const [simulatorMode, setSimulatorMode] = useState<'single' | 'combination' | 'patient'>('single');
@@ -117,6 +119,7 @@ function AppContent() {
         onOpenDocsModal={() => setIsDocsModalOpen(true)}
         onOpenFormsModal={() => setIsFormsModalOpen(true)}
         onOpenGoogleChatModal={() => setIsGoogleChatModalOpen(true)}
+        onOpenGoogleMeetModal={() => setIsGoogleMeetModalOpen(true)}
       />
 
       {/* 3. Main Workspace Body */}
@@ -376,6 +379,11 @@ function AppContent() {
       <GoogleChatIntegrationModal
         isOpen={isGoogleChatModalOpen}
         onClose={() => setIsGoogleChatModalOpen(false)}
+      />
+
+      <GoogleMeetIntegrationModal
+        isOpen={isGoogleMeetModalOpen}
+        onClose={() => setIsGoogleMeetModalOpen(false)}
       />
 
       <GitHubBranchingModal

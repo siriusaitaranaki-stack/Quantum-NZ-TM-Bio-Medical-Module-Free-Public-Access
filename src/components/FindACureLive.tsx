@@ -1311,9 +1311,13 @@ Provide an exhaustive, highly technical, chemically precise, and scientifically 
                         className="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-cyan-400"
                       >
                         <option value="rcsb-pdb">RCSB Protein Data Bank (PDB REST)</option>
+                        <option value="who-gho">World Health Organization (WHO GHO API)</option>
+                        <option value="who-ictrp">WHO Clinical Trials Platform (ICTRP)</option>
+                        <option value="who-iris">WHO Repository (IRIS Publications)</option>
                         <option value="pubchem">NCBI PubChem PUG REST</option>
                         <option value="uniprot">Universal Protein Resource (UniProt KB)</option>
                         <option value="clinicaltrials">ClinicalTrials.gov v2 REST API</option>
+                        <option value="alphafold">AlphaFold DB (EMBL-EBI)</option>
                         <option value="openfda">OpenFDA Drug & Device Submissions</option>
                         <option value="europepmc">Europe PMC Open Literature Search</option>
                         <option value="chembl">EMBL-EBI ChEMBL Bioactive API</option>

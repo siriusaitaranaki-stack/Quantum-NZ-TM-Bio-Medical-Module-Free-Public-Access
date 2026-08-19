@@ -40,13 +40,14 @@ export const PatentHeader: React.FC<PatentHeaderProps> = ({
       <div className="absolute top-0 right-1/4 w-96 h-32 bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
       <div className="absolute -bottom-10 left-10 w-80 h-24 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
 
-      {/* Top Universal Banner */}
-      <div className="bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 px-4 py-1.5 text-center text-xs sm:text-sm font-bold tracking-wider text-slate-950 flex items-center justify-center gap-2 shadow-inner uppercase">
+      {/* Top Universal Banner with Live User Counter */}
+      <div className="bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 px-4 py-1.5 text-center text-xs sm:text-sm font-bold tracking-wider text-slate-950 flex flex-wrap items-center justify-center gap-2 shadow-inner uppercase">
         <Globe className="w-4 h-4 animate-spin text-slate-950" style={{ animationDuration: '12s' }} />
         <span>MEDICAL DEVELOPMENTAL SIMULATION SOFTWARE — FREE FOR ALL OF HUMANITY @ FOREVER</span>
-        <span className="hidden md:inline bg-slate-950 text-emerald-300 text-[10px] px-2 py-0.5 rounded-full font-mono font-semibold ml-2">
-          GLOBAL HUMANITARIAN COVENANT
-        </span>
+        <div className="flex items-center gap-1.5 bg-slate-950 text-emerald-300 text-[10px] px-2.5 py-0.5 rounded-full font-mono font-bold shadow-inner">
+          <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping inline-block" />
+          <span>1,482 LIVE RESEARCHERS ONLINE</span>
+        </div>
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4">

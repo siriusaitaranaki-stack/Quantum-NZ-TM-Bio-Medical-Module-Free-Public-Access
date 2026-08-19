@@ -354,6 +354,39 @@ export const DiseaseLab: React.FC = () => {
               ))}
             </div>
 
+            {/* Real Live Global Medical & WHO Deep Links */}
+            <div className="pt-2 border-t border-slate-800 flex flex-wrap items-center gap-2">
+              <a
+                href={`https://icd.who.int/browse11/l-m/en#/http%3a%2f%2fid.who.int%2ficd%2fentity%2f`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-[11px] px-2.5 py-1 rounded bg-emerald-950/80 border border-emerald-500/40 text-emerald-300 hover:text-white flex items-center gap-1.5 transition"
+              >
+                <span>WHO ICD-11 Global Classification</span>
+                <ExternalLink className="w-3 h-3" />
+              </a>
+
+              <a
+                href={`https://clinicaltrials.gov/search?term=${encodeURIComponent(currentDisease.diseaseName)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-[11px] px-2.5 py-1 rounded bg-blue-950/80 border border-blue-500/40 text-cyan-300 hover:text-white flex items-center gap-1.5 transition"
+              >
+                <span>ClinicalTrials.gov Studies ({currentDisease.diseaseName})</span>
+                <ExternalLink className="w-3 h-3" />
+              </a>
+
+              <a
+                href={`https://pubmed.ncbi.nlm.nih.gov/?term=${encodeURIComponent(currentDisease.diseaseName + ' targeted therapy')}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-[11px] px-2.5 py-1 rounded bg-purple-950/80 border border-purple-500/40 text-purple-300 hover:text-white flex items-center gap-1.5 transition"
+              >
+                <span>PubMed Central NCBI</span>
+                <ExternalLink className="w-3 h-3" />
+              </a>
+            </div>
+
             {/* Production Timeline Steps */}
             <div className="mt-3 pt-3 border-t border-slate-800 space-y-2">
               <div className="text-xs font-semibold text-slate-300">

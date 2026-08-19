@@ -11,15 +11,9 @@
 
 import React, { useState, useEffect } from 'react';
 import { PatentHeader } from './components/PatentHeader';
-import { Navigation, ActiveTab } from './components/Navigation';
-import { FindACureLive } from './components/FindACureLive';
-import { DockingSimulator } from './components/DockingSimulator';
-import { DiseaseLab } from './components/DiseaseLab';
-import { QuantumCalculusLab } from './components/QuantumCalculusLab';
-import { CrossReferenceEngine } from './components/CrossReferenceEngine';
-import { ProductionScaler } from './components/ProductionScaler';
-import { HumanitarianDonationLab } from './components/HumanitarianDonationLab';
-import { LiveChat } from './components/LiveChat';
+import { FirefoxTabBar } from './components/FirefoxTabBar';
+import { FloatingWindow } from './components/FloatingWindow';
+import { TabContentRenderer } from './components/TabContentRenderer';
 import { CoherenceAccuracyMetrics } from './components/CoherenceAccuracyMetrics';
 import { LegalCertificationModal } from './components/LegalCertificationModal';
 import { ExportDossierModal } from './components/ExportDossierModal';
@@ -39,30 +33,24 @@ import { GitHubBranchingModal } from './components/GitHubBranchingModal';
 import { AudioNarratorProvider } from './context/AudioNarratorContext';
 import { BiomedicalWebSocketProvider } from './context/BiomedicalWebSocketContext';
 import { FirebaseProvider, useFirebase } from './context/FirebaseContext';
+import { TabWorkspaceProvider, useTabWorkspace } from './context/TabWorkspaceContext';
 import { AudioVoiceController } from './components/AudioVoiceController';
 import {
-  ShieldCheck,
   Globe,
-  Radio,
-  Lock,
-  HeartPulse,
-  Share2,
   FileText,
-  Building2,
-  GraduationCap,
-  Activity,
-  Heart,
-  Cloud,
-  Users,
-  LogIn,
-  Mail,
   FileSpreadsheet,
+  CheckSquare,
   MessageSquare,
-  CheckSquare
+  Mail,
+  Users,
+  Cloud,
+  Heart,
+  ShieldCheck
 } from 'lucide-react';
 
 function AppContent() {
-  const [activeTab, setActiveTab] = useState<ActiveTab>('find-a-cure');
+  const { tabs, activeTab, openTab, setActiveTabId } = useTabWorkspace();
+
   const [isLegalModalOpen, setIsLegalModalOpen] = useState<boolean>(false);
   const [isExportModalOpen, setIsExportModalOpen] = useState<boolean>(false);
   const [isDonationModalOpen, setIsDonationModalOpen] = useState<boolean>(false);
@@ -77,8 +65,6 @@ function AppContent() {
   const [isGoogleChatModalOpen, setIsGoogleChatModalOpen] = useState<boolean>(false);
   const [isGoogleMeetModalOpen, setIsGoogleMeetModalOpen] = useState<boolean>(false);
   const [isGitHubModalOpen, setIsGitHubModalOpen] = useState<boolean>(false);
-  const [simulatorDiseaseId, setSimulatorDiseaseId] = useState<string>('nsclc');
-  const [simulatorMode, setSimulatorMode] = useState<'single' | 'combination' | 'patient'>('single');
 
   const { user, needsRegistration, allRegisteredUsers } = useFirebase();
 
@@ -90,13 +76,13 @@ function AppContent() {
   }, [needsRegistration, user]);
 
   const handleNavigateTo3DSimulator = (diseaseId?: string, isMultiCombo?: boolean) => {
-    if (diseaseId) setSimulatorDiseaseId(diseaseId);
-    setSimulatorMode(isMultiCombo ? 'combination' : 'single');
-    setActiveTab('docking');
+    openTab('docking', { diseaseId, isMulti: isMultiCombo });
   };
 
+  const snappedOutTabs = tabs.filter((t) => t.isSnappedOut);
+
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans selection:bg-cyan-500 selection:text-slate-950">
+    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans selection:bg-cyan-500 selection:text-slate-950 relative overflow-x-hidden">
       {/* 1. Globally Legally Compliant Patent & Sovereign Developer Header */}
       <PatentHeader
         onOpenLegalModal={() => setIsLegalModalOpen(true)}
@@ -105,15 +91,14 @@ function AppContent() {
         onOpenGitHubModal={() => setIsGitHubModalOpen(true)}
       />
 
-      {/* 2. Navigation Bar & Quick Tools */}
-      <Navigation
-        activeTab={activeTab}
-        setActiveTab={setActiveTab}
+      {/* 2. Top Firefox-Style Browser Tab Bar, Omnibox, & Quick Horizontal Workspace Tools */}
+      <FirefoxTabBar
         onOpenExportModal={() => setIsExportModalOpen(true)}
         onOpenLegalModal={() => setIsLegalModalOpen(true)}
         onOpenDonationModal={() => setIsDonationModalOpen(true)}
         onOpenAuthModal={() => setIsAuthModalOpen(true)}
         onOpenRegistryModal={() => setIsRegistryModalOpen(true)}
+        onOpenBillingModal={() => setIsBillingModalOpen(true)}
         onOpenGmailModal={() => setIsGmailModalOpen(true)}
         onOpenSheetsModal={() => setIsSheetsModalOpen(true)}
         onOpenDocsModal={() => setIsDocsModalOpen(true)}
@@ -122,7 +107,7 @@ function AppContent() {
         onOpenGoogleMeetModal={() => setIsGoogleMeetModalOpen(true)}
       />
 
-      {/* 3. Main Workspace Body */}
+      {/* 3. Main Workspace Body (Renders the Active Docked Tab) */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 py-6 space-y-6">
         {/* Google Cloud Billing Threshold & Voluntary Support Notice Banner */}
         <GoogleCloudBillingThresholdBanner
@@ -133,29 +118,52 @@ function AppContent() {
         {/* Real-Time Deterministic Coherence & Accuracy Live Data Metrics Core */}
         <CoherenceAccuracyMetrics />
 
-        {activeTab === 'find-a-cure' && (
-          <FindACureLive onNavigateTo3DSimulator={handleNavigateTo3DSimulator} />
+        {/* Render Active Non-Detached Tab Content */}
+        {activeTab && !activeTab.isSnappedOut && (
+          <div className="w-full transition-all duration-300">
+            <TabContentRenderer
+              tab={activeTab}
+              onNavigateTo3DSimulator={handleNavigateTo3DSimulator}
+              onOpenExportModal={() => setIsExportModalOpen(true)}
+              onOpenLegalModal={() => setIsLegalModalOpen(true)}
+              onOpenDonationModal={() => setIsDonationModalOpen(true)}
+              onOpenAuthModal={() => setIsAuthModalOpen(true)}
+              onOpenRegistryModal={() => setIsRegistryModalOpen(true)}
+              onOpenBillingModal={() => setIsBillingModalOpen(true)}
+              onOpenGmailModal={() => setIsGmailModalOpen(true)}
+              onOpenSheetsModal={() => setIsSheetsModalOpen(true)}
+              onOpenDocsModal={() => setIsDocsModalOpen(true)}
+              onOpenFormsModal={() => setIsFormsModalOpen(true)}
+              onOpenGoogleChatModal={() => setIsGoogleChatModalOpen(true)}
+              onOpenGoogleMeetModal={() => setIsGoogleMeetModalOpen(true)}
+            />
+          </div>
         )}
-        {activeTab === 'live-chat' && (
-          <LiveChat
-            onNavigateToSimulator={handleNavigateTo3DSimulator}
-            onOpenAuthModal={() => setIsAuthModalOpen(true)}
-          />
-        )}
-        {activeTab === 'docking' && (
-          <DockingSimulator
-            initialDiseaseId={simulatorDiseaseId}
-            initialMode={simulatorMode}
-          />
-        )}
-        {activeTab === 'diseases' && <DiseaseLab />}
-        {activeTab === 'quantum-calculus' && <QuantumCalculusLab />}
-        {activeTab === 'cross-reference' && <CrossReferenceEngine />}
-        {activeTab === 'production' && <ProductionScaler />}
-        {activeTab === 'donate' && <HumanitarianDonationLab />}
       </main>
 
-      {/* 4. Global Coherence & Humanitarian Status Footer */}
+      {/* 4. Detached Floating / Snapped-Out Windows (Draggable, 8-Way Resizable, Maximize/Minimize) */}
+      {snappedOutTabs.map((floatingTab) => (
+        <FloatingWindow key={floatingTab.id} tab={floatingTab}>
+          <TabContentRenderer
+            tab={floatingTab}
+            onNavigateTo3DSimulator={handleNavigateTo3DSimulator}
+            onOpenExportModal={() => setIsExportModalOpen(true)}
+            onOpenLegalModal={() => setIsLegalModalOpen(true)}
+            onOpenDonationModal={() => setIsDonationModalOpen(true)}
+            onOpenAuthModal={() => setIsAuthModalOpen(true)}
+            onOpenRegistryModal={() => setIsRegistryModalOpen(true)}
+            onOpenBillingModal={() => setIsBillingModalOpen(true)}
+            onOpenGmailModal={() => setIsGmailModalOpen(true)}
+            onOpenSheetsModal={() => setIsSheetsModalOpen(true)}
+            onOpenDocsModal={() => setIsDocsModalOpen(true)}
+            onOpenFormsModal={() => setIsFormsModalOpen(true)}
+            onOpenGoogleChatModal={() => setIsGoogleChatModalOpen(true)}
+            onOpenGoogleMeetModal={() => setIsGoogleMeetModalOpen(true)}
+          />
+        </FloatingWindow>
+      ))}
+
+      {/* 5. Global Coherence & Humanitarian Status Footer */}
       <footer className="bg-slate-950 border-t border-slate-800/80 text-slate-400 py-6 mt-12 text-xs">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 text-[11px] pb-4 border-b border-slate-800/80">
@@ -210,9 +218,9 @@ function AppContent() {
             <div>
               © 2025-2026 Discrete PC | Landreth Legacy Trust IP Portfolio | The Sovereign Architect & Creator: James Andrew Douglas Paton
             </div>
-            <div className="flex items-center gap-4 text-slate-400">
+            <div className="flex flex-wrap items-center gap-3 text-slate-400">
               <button
-                onClick={() => setActiveTab('live-chat')}
+                onClick={() => openTab('live-chat')}
                 className="text-cyan-400 hover:text-cyan-300 font-medium flex items-center gap-1 transition cursor-pointer"
               >
                 <MessageSquare className="w-3 h-3 text-cyan-400" />
@@ -220,7 +228,7 @@ function AppContent() {
               </button>
               <span>•</span>
               <button
-                onClick={() => setIsDocsModalOpen(true)}
+                onClick={() => openTab('docs')}
                 className="text-blue-400 hover:text-blue-300 font-medium flex items-center gap-1 transition cursor-pointer"
               >
                 <FileText className="w-3 h-3 text-blue-400" />
@@ -228,7 +236,7 @@ function AppContent() {
               </button>
               <span>•</span>
               <button
-                onClick={() => setIsSheetsModalOpen(true)}
+                onClick={() => openTab('sheets')}
                 className="text-emerald-400 hover:text-emerald-300 font-medium flex items-center gap-1 transition cursor-pointer"
               >
                 <FileSpreadsheet className="w-3 h-3 text-emerald-400" />
@@ -236,7 +244,7 @@ function AppContent() {
               </button>
               <span>•</span>
               <button
-                onClick={() => setIsFormsModalOpen(true)}
+                onClick={() => openTab('forms')}
                 className="text-purple-400 hover:text-purple-300 font-medium flex items-center gap-1 transition cursor-pointer"
               >
                 <CheckSquare className="w-3 h-3 text-purple-400" />
@@ -244,7 +252,7 @@ function AppContent() {
               </button>
               <span>•</span>
               <button
-                onClick={() => setIsGoogleChatModalOpen(true)}
+                onClick={() => openTab('google-chat')}
                 className="text-teal-400 hover:text-teal-300 font-medium flex items-center gap-1 transition cursor-pointer"
               >
                 <MessageSquare className="w-3 h-3 text-teal-400" />
@@ -252,7 +260,7 @@ function AppContent() {
               </button>
               <span>•</span>
               <button
-                onClick={() => setIsGmailModalOpen(true)}
+                onClick={() => openTab('gmail')}
                 className="text-rose-400 hover:text-rose-300 font-medium flex items-center gap-1 transition cursor-pointer"
               >
                 <Mail className="w-3 h-3 text-rose-400" />
@@ -260,7 +268,7 @@ function AppContent() {
               </button>
               <span>•</span>
               <button
-                onClick={() => setIsRegistryModalOpen(true)}
+                onClick={() => openTab('registry')}
                 className="text-indigo-400 hover:text-indigo-300 font-medium flex items-center gap-1 transition cursor-pointer"
               >
                 <Users className="w-3 h-3 text-indigo-400" />
@@ -301,10 +309,10 @@ function AppContent() {
         </div>
       </footer>
 
-      {/* 5. Floating Calm Educated Female Voice Audio Controller & Subtitles */}
+      {/* 6. Floating Calm Educated Female Voice Audio Controller & Subtitles */}
       <AudioVoiceController />
 
-      {/* 6. Modals */}
+      {/* 7. Modals */}
       <LegalCertificationModal
         isOpen={isLegalModalOpen}
         onClose={() => setIsLegalModalOpen(false)}
@@ -399,7 +407,9 @@ export default function App() {
     <FirebaseProvider>
       <BiomedicalWebSocketProvider>
         <AudioNarratorProvider>
-          <AppContent />
+          <TabWorkspaceProvider>
+            <AppContent />
+          </TabWorkspaceProvider>
         </AudioNarratorProvider>
       </BiomedicalWebSocketProvider>
     </FirebaseProvider>

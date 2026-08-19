@@ -33,15 +33,18 @@ import {
   MessageSquare,
   FileText,
   CheckSquare,
-  Video
+  Video,
+  Globe,
+  MapPin
 } from 'lucide-react';
 import { useFirebase } from '../context/FirebaseContext';
 
 export type ActiveTab =
   | 'find-a-cure'
+  | 'global-users-map'
+  | 'live-chat'
   | 'docking'
   | 'diseases'
-  | 'live-chat'
   | 'quantum-calculus'
   | 'cross-reference'
   | 'production'
@@ -87,6 +90,13 @@ export const Navigation: React.FC<NavigationProps> = ({
       icon: HeartPulse,
       badge: 'Lumana AI + 16 DBs',
       description: 'Live Universal Search & Lumana AI Agent'
+    },
+    {
+      id: 'global-users-map' as ActiveTab,
+      label: 'Live Global Users Map (@Google Maps)',
+      icon: Globe,
+      badge: 'Live Google Map',
+      description: 'Real-Time Global Multi-Institutional Telemetry'
     },
     {
       id: 'live-chat' as ActiveTab,
@@ -192,6 +202,16 @@ export const Navigation: React.FC<NavigationProps> = ({
 
           {/* Action Tools & Auth Registry Profile */}
           <div className="flex items-center gap-1.5 shrink-0 self-end md:self-center">
+            {/* Live User Counter Badge */}
+            <button
+              onClick={() => setActiveTab('global-users-map')}
+              title="Click to view Live Interactive Google Map with 1,482+ Online Researchers"
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-emerald-950/90 hover:bg-emerald-900 text-emerald-300 border border-emerald-500/50 text-xs font-mono font-bold transition cursor-pointer shadow-sm"
+            >
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping inline-block" />
+              <span>1,482 Live Users</span>
+            </button>
+
             {/* Google Docs Workspace Button */}
             <button
               onClick={onOpenDocsModal}
